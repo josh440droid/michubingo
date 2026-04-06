@@ -3,117 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MICHUU BINGO</title> <!-- 1. Title Changed -->
+    <title>MICHUU BINGO</title>
     <script src="https://telegram.org"></script>
     <style>
         :root {
             --bg-color: #000000;
             --text-color: #ffffff;
-            --bingo-red: #ff0000;
+            --accent-red: #ff0000;
+            --cell-white: #ffffff;
         }
 
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 20px;
+            padding-top: 15px;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         h1 {
-            color: var(--bingo-red);
-            font-size: 2.5rem;
+            color: var(--accent-red);
+            font-size: 2.2rem;
             margin: 0;
-            letter-spacing: 5px;
-            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            letter-spacing: 4px;
+            font-weight: 900;
         }
 
+        /* Bingo Card @AddisBingoBot Style */
         .bingo-card {
-            width: 90%;
+            width: 92%;
             max-width: 360px;
-            background: var(--bingo-red);
-            padding: 10px;
-            border-radius: 15px;
+            background: var(--accent-red);
+            padding: 8px;
+            border-radius: 12px;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 6px;
-            margin-top: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            gap: 5px;
+            margin-top: 15px;
+            box-shadow: 0 8px 25px rgba(255, 0, 0, 0.4);
         }
 
         .cell {
-            background: white;
+            background: var(--cell-white);
             color: black;
-            aspect-ratio: 1/1;
+            aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900;
-            font-size: 1.2rem;
-            border-radius: 8px;
+            font-weight: 800;
+            font-size: 1.1rem;
+            border-radius: 4px;
             cursor: pointer;
             transition: 0.1s;
         }
 
         .cell.marked {
-            background: #333 !important;
+            background: #2c2c2c !important;
             color: white !important;
             position: relative;
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.8);
         }
 
         .cell.marked::after {
             content: "";
             position: absolute;
-            width: 80%;
-            height: 80%;
-            border: 2px solid var(--bingo-red);
+            width: 70%;
+            height: 70%;
+            border: 2px solid var(--accent-red);
             border-radius: 50%;
         }
 
-        .controls {
-            margin-top: 30px;
+        .ball-display-area {
+            margin-top: 25px;
             text-align: center;
         }
 
-        #ball-display {
-            width: 80px;
-            height: 80px;
+        #ball-num {
+            width: 75px;
+            height: 75px;
             background: white;
-            color: var(--bingo-red);
+            color: var(--accent-red);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.2rem;
+            font-size: 2.3rem;
             font-weight: 900;
-            border: 5px solid var(--bingo-red);
+            border: 4px solid var(--accent-red);
             margin: 0 auto 15px;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
         }
 
-        .btn-draw {
-            background: var(--bingo-red);
+        .draw-button {
+            background: var(--accent-red);
             color: white;
             border: none;
-            padding: 15px 45px;
-            border-radius: 50px;
-            font-size: 1.2rem;
+            padding: 14px 45px;
+            border-radius: 30px;
+            font-size: 1.1rem;
             font-weight: bold;
             cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255,0,0,0.3);
             text-transform: uppercase;
-            box-shadow: 0 5px 15px rgba(255,0,0,0.4);
+        }
+
+        .draw-button:active {
+            transform: scale(0.96);
         }
     </style>
 </head>
 <body>
-    <h1>MICHUU BINGO</h1> <!-- 2. Main Header Changed -->
-    <div class="bingo-card" id="grid"></div>
-    <div class="controls">
-        <div id="ball-display">--</div>
-        <button class="btn-draw" onclick="drawBall()">DRAW NUMBER</button>
+
+    <h1>MICHUU BINGO</h1>
+
+    <div class="bingo-card" id="card-grid"></div>
+
+    <div class="ball-display-area">
+        <div id="ball-num">--</div>
+        <button class="draw-button" onclick="drawBall()">Draw Number</button>
     </div>
 
     <script>
@@ -121,30 +133,31 @@
         tg.ready();
         tg.expand();
 
-        const grid = document.getElementById('grid');
-        const display = document.getElementById('ball-display');
-        let pool = Array.from({length: 75}, (_, i) => i + 1);
+        const grid = document.getElementById('card-grid');
+        const display = document.getElementById('ball-num');
+        let numbersPool = Array.from({length: 75}, (_, i) => i + 1);
 
-        function setupCard() {
-            const data = [];
-            for(let i=0; i<5; i++) {
-                let col = Array.from({length: 15}, (_, j) => (i*15)+j+1)
-                    .sort(() => Math.random() - 0.5).slice(0, 5);
-                data.push(col);
+        function generateCard() {
+            const columns = [[], [], [], [], []];
+            // B(1-15), I(16-30), N(31-45), G(46-60), O(61-75)
+            for (let i = 0; i < 5; i++) {
+                let range = Array.from({length: 15}, (_, j) => (i * 15) + j + 1);
+                columns[i] = range.sort(() => Math.random() - 0.5).slice(0, 5);
             }
-            for(let r=0; r<5; r++) {
-                for(let c=0; c<5; c++) {
+
+            for (let r = 0; r < 5; r++) {
+                for (let c = 0; c < 5; c++) {
                     const cell = document.createElement('div');
                     cell.className = 'cell';
-                    if(r === 2 && c === 2) {
+                    if (r === 2 && c === 2) {
                         cell.innerText = "FREE";
                         cell.classList.add('marked');
                     } else {
-                        cell.innerText = data[c][r];
+                        cell.innerText = columns[c][r];
                         cell.onclick = function() {
                             this.classList.toggle('marked');
-                            if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-                        }
+                            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+                        };
                     }
                     grid.appendChild(cell);
                 }
@@ -152,13 +165,14 @@
         }
 
         function drawBall() {
-            if(pool.length === 0) return;
-            const idx = Math.floor(Math.random() * pool.length);
-            const num = pool.splice(idx, 1);
+            if (numbersPool.length === 0) return;
+            const index = Math.floor(Math.random() * numbersPool.length);
+            const num = numbersPool.splice(index, 1);
             display.innerText = num;
-            if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         }
-        setupCard();
+
+        generateCard();
     </script>
 </body>
 </html>
