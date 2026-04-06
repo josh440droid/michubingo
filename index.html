@@ -1,68 +1,62 @@
 <!DOCTYPE html>
-<html lang="om">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Addis Bingo Clone</title>
+    <title>MICHUU BINGO</title> <!-- 1. Title Changed -->
     <script src="https://telegram.org"></script>
     <style>
         :root {
-            --tg-theme-bg-color: #000000;
-            --tg-theme-text-color: #ffffff;
+            --bg-color: #000000;
+            --text-color: #ffffff;
             --bingo-red: #ff0000;
         }
 
         body {
-            background-color: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Roboto, Arial, sans-serif;
             margin: 0;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding-top: 20px;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
 
-        .header h1 {
+        h1 {
             color: var(--bingo-red);
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             margin: 0;
-            text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
         }
 
-        /* Bingo Card Structure */
         .bingo-card {
             width: 90%;
             max-width: 360px;
             background: var(--bingo-red);
             padding: 10px;
-            border-radius: 12px;
+            border-radius: 15px;
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 6px;
             margin-top: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
         .cell {
             background: white;
             color: black;
-            aspect-ratio: 1;
+            aspect-ratio: 1/1;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
+            font-weight: 900;
             font-size: 1.2rem;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            transition: transform 0.1s;
-        }
-
-        .cell:active {
-            transform: scale(0.9);
+            transition: 0.1s;
         }
 
         .cell.marked {
@@ -80,24 +74,23 @@
             border-radius: 50%;
         }
 
-        /* Floating Ball Display */
-        .ball-area {
+        .controls {
             margin-top: 30px;
             text-align: center;
         }
 
-        #current-ball {
-            width: 70px;
-            height: 70px;
+        #ball-display {
+            width: 80px;
+            height: 80px;
             background: white;
             color: var(--bingo-red);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 900;
-            border: 4px solid var(--bingo-red);
+            border: 5px solid var(--bingo-red);
             margin: 0 auto 15px;
         }
 
@@ -105,30 +98,22 @@
             background: var(--bingo-red);
             color: white;
             border: none;
-            padding: 12px 40px;
-            border-radius: 25px;
-            font-size: 1.1rem;
+            padding: 15px 45px;
+            border-radius: 50px;
+            font-size: 1.2rem;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 15px rgba(255,0,0,0.3);
-        }
-
-        .btn-draw:active {
-            transform: translateY(2px);
+            text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(255,0,0,0.4);
         }
     </style>
 </head>
 <body>
-
-    <div class="header">
-        <h1>ADDIS BINGO</h1>
-    </div>
-
-    <div class="bingo-card" id="card-grid"></div>
-
-    <div class="ball-area">
-        <div id="current-ball">--</div>
-        <button class="btn-draw" onclick="drawBall()">LAKKOOFSA FIDI</button>
+    <h1>MICHUU BINGO</h1> <!-- 2. Main Header Changed -->
+    <div class="bingo-card" id="grid"></div>
+    <div class="controls">
+        <div id="ball-display">--</div>
+        <button class="btn-draw" onclick="drawBall()">DRAW NUMBER</button>
     </div>
 
     <script>
@@ -136,20 +121,17 @@
         tg.ready();
         tg.expand();
 
-        const grid = document.getElementById('card-grid');
-        const ballDisplay = document.getElementById('current-ball');
+        const grid = document.getElementById('grid');
+        const display = document.getElementById('ball-display');
         let pool = Array.from({length: 75}, (_, i) => i + 1);
 
-        function createCard() {
-            // Columns B(1-15), I(16-30), N(31-45), G(46-60), O(61-75)
-            const cardData = [];
+        function setupCard() {
+            const data = [];
             for(let i=0; i<5; i++) {
                 let col = Array.from({length: 15}, (_, j) => (i*15)+j+1)
-                    .sort(() => Math.random() - 0.5)
-                    .slice(0, 5);
-                cardData.push(col);
+                    .sort(() => Math.random() - 0.5).slice(0, 5);
+                data.push(col);
             }
-
             for(let r=0; r<5; r++) {
                 for(let c=0; c<5; c++) {
                     const cell = document.createElement('div');
@@ -158,7 +140,7 @@
                         cell.innerText = "FREE";
                         cell.classList.add('marked');
                     } else {
-                        cell.innerText = cardData[c][r];
+                        cell.innerText = data[c][r];
                         cell.onclick = function() {
                             this.classList.toggle('marked');
                             if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
@@ -172,12 +154,11 @@
         function drawBall() {
             if(pool.length === 0) return;
             const idx = Math.floor(Math.random() * pool.length);
-            const num = pool.splice(idx, 1)[0];
-            ballDisplay.innerText = num;
+            const num = pool.splice(idx, 1);
+            display.innerText = num;
             if(tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         }
-
-        createCard();
+        setupCard();
     </script>
 </body>
 </html>
